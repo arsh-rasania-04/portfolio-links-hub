@@ -45,6 +45,12 @@ const ProjectCard = ({ name, url, progress, color }) => {
 };
 
 function App() {
+  const myLinks = [
+    { id: 1, name: "Main Portfolio", url: "https://arsh.dev", color: "#6e57e0", progress: 100 },
+    { id: 2, name: "GitHub Profile", url: "https://github.com/Arsh-M-Rasania", color: "#333", progress: 100 },
+    { id: 3, name: "LinkedIn", url: "https://linkedin.com/in/arsh", color: "#0077b5", progress: 100 },
+    { id: 4, name: "Civil Engineering Blog", url: "https://kgp-blog.com", color: "#e67e22", progress: 50 }
+  ];
 
   const otherProjects = [
     { id: 5, name: "Mongo DB University", progress: 0, url: "https://www.mongodb.com/resources/languages/mern-stack-tutorial" },
@@ -77,7 +83,7 @@ function App() {
       }}>
 
         {/* LEFT COLUMN: My Links */}
-        <div>
+        <div style={{ minWidth: '300px' }}>
           <h2 style={{ borderBottom: '2px solid #6e57e0', width: 'fit-content', paddingBottom: '5px', marginBottom: '20px' }}>Socials & Portfolio</h2>
           {myLinks.map((proj) => (
             <ProjectCard key={proj.id} {...proj} />
@@ -85,7 +91,7 @@ function App() {
         </div>
 
         {/* RIGHT COLUMN: Tasks */}
-        <div>
+        <div style={{ minWidth: '300px' }}>
           <h2 style={{ borderBottom: '2px solid #4ade80', width: 'fit-content', paddingBottom: '5px', marginBottom: '20px' }}>Learning Resources</h2>
           {otherProjects.map((proj) => (
             <ProjectCard key={proj.id} {...proj} />
