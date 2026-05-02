@@ -3,3 +3,11 @@ node_modules
 dist
 *.local
 .DS_Store
+
+# Ignore backend dependencies
+server/node_modules/
+server/.env
+
+# Ignore frontend dependencies (usually already there)
+node_modules/
+
