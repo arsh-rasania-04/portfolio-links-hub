@@ -10,3 +10,4 @@ server/.env
 # Ignore build files
 client/dist/
 
+.DS_Store

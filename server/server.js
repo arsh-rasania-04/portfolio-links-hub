@@ -1,89 +1,71 @@
+require('dotenv').config(); 
 const express = require('express');
+const mongoose = require('mongoose');
 const cors = require('cors');
+const Link = require('./models/Link');
 
-// Initialize the Express application
 const app = express();
-const PORT = process.env.PORT || 5001;
 
-// ==========================================
 // 1. MIDDLEWARE
-// ==========================================
-// Allows your React app to communicate with this API without security blocks
 app.use(cors()); 
-// Tells Express how to read incoming JSON data from POST requests
 app.use(express.json()); 
 
-// ==========================================
-// 2. IN-MEMORY DATABASE (Temporary Phase 2 Setup)
-// ==========================================
-// We will replace this array with MongoDB in Phase 3. 
-// For now, if the server restarts, this resets.
-let links = [
-  { id: 1, name: "Main Portfolio", url: "https://arsh.dev", color: "#6e57e0", progress: 100, category: 'social' },
-  { id: 2, name: "Mongo DB University", url: "https://www.mongodb.com/resources/languages/mern-stack-tutorial", color: "#4ade80", progress: 0, category: 'learning' }
-];
+// 2. DATABASE CONNECTION
+const mongoURI = process.env.MONGO_URI;
+mongoose.connect(mongoURI)
+  .then(() => console.log("✅ MongoDB Connected!"))
+  .catch(err => console.log("❌ Connection Error:", err));
 
-// ==========================================
-// 3. API ROUTES (The Endpoints)
-// ==========================================
-
-// Route A: GET all links
-// What it does: Sends your current list of links to the frontend.
-
+// 3. API ROUTES
 app.get('/', (req, res) => {
-  res.send("The server is reachable!");
+  res.send("The Link-Hub Cloud Server is officially alive! 🚀");
 });
 
-app.get('/api/links', (req, res) => {
-  res.status(200).json(links);
+// GET all links
+app.get('/api/links', async (req, res) => {
+  try {
+    const links = await Link.find(); 
+    res.status(200).json(links);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching links: " + err.message });
+  }
 });
 
-// Route B: POST a new link
-// What it does: Receives new link data from React and adds it to the list.
-app.post('/api/links', (req, res) => {
+// POST a new link
+app.post('/api/links', async (req, res) => {
   const { name, url, color, category } = req.body;
-
-  // Crucial Backend Validation: Never trust the frontend completely
   if (!name || !url) {
-    return res.status(400).json({ message: "Please provide both a name and a URL." });
+    return res.status(400).json({ message: "Name and URL are required." });
   }
-
-  const newLink = {
-    id: Date.now(), // Generate a temporary unique ID
-    name: name,
-    url: url,
-    color: color || '#4ade80', // Default color if none provided
-    progress: 0,
-    category: category || 'learning'
-  };
-
-  links.push(newLink); // Save to our "database"
-  
-  // Status 201 means "Created successfully"
-  res.status(201).json(newLink); 
+  try {
+    const newLink = new Link({
+      name,
+      url,
+      color: color || '#4ade80',
+      category: category || 'learning'
+    });
+    const savedLink = await newLink.save(); 
+    res.status(201).json(savedLink);
+  } catch (err) {
+    res.status(400).json({ message: "Error saving link: " + err.message });
+  }
 });
 
-// Route C: DELETE a link
-// What it does: Finds a link by its ID and removes it.
-app.delete('/api/links/:id', (req, res) => {
-  const linkId = parseInt(req.params.id); // Convert the ID from the URL into a number
-  
-  // Check if the link actually exists before trying to delete it
-  const linkExists = links.some(link => link.id === linkId);
-  
-  if (!linkExists) {
-    return res.status(404).json({ message: "Link not found." });
+// DELETE a link
+app.delete('/api/links/:id', async (req, res) => {
+  try {
+    const deletedLink = await Link.findByIdAndDelete(req.params.id);
+    if (!deletedLink) {
+      return res.status(404).json({ message: "Link not found in database." });
+    }
+    res.status(200).json({ message: "Link successfully deleted from cloud." });
+  } catch (err) {
+    res.status(500).json({ message: "Error deleting link: " + err.message });
   }
-
-  // Filter out the requested link
-  links = links.filter(link => link.id !== linkId);
-  
-  res.status(200).json({ message: "Link successfully deleted.", deletedId: linkId });
 });
 
-// ==========================================
-// 4. START THE SERVER
-// ==========================================
+// 4. START SERVER (Only one listener!)
+const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
-  console.log(`🚀 Backend Server is running smoothly on http://localhost:${PORT}`);
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
 });

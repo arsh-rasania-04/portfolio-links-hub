@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react'; // Added useEffect
 
-const ProjectCard = ({ name, url, progress, color }) => {
+
+
+const ProjectCard = ({ _id, name, url, progress, color }) => { 
   const getStatus = (p) => {
     if (p === 0) return "Pending";
     if (p === 100) return "Completed";
@@ -130,14 +132,14 @@ function App() {
         <div style={{ minWidth: '300px' }}>
           <h2 style={{ borderBottom: '2px solid #6e57e0', width: 'fit-content', paddingBottom: '5px', marginBottom: '20px' }}>Socials & Portfolio</h2>
           {links.filter(link => link.category === 'social').map(proj => (
-            <ProjectCard key={proj.id || proj._id} {...proj} />
+            <ProjectCard key={proj._id} {...proj} />
           ))}
         </div>
 
         <div style={{ minWidth: '300px' }}>
           <h2 style={{ borderBottom: '2px solid #4ade80', width: 'fit-content', paddingBottom: '5px', marginBottom: '20px' }}>Learning Resources</h2>
           {links.filter(link => link.category === 'learning').map(proj => (
-            <ProjectCard key={proj.id || proj._id} {...proj} />
+            <ProjectCard key={proj._id} {...proj} />
           ))}
         </div>
       </div>
