@@ -1,13 +1,12 @@
-node_modules
-.vite
-dist
-*.local
-.DS_Store
 
-# Ignore backend dependencies
+# Ignore dependencies for both sides
+client/node_modules/
 server/node_modules/
-server/.env
 
-# Ignore frontend dependencies (usually already there)
-node_modules/
+# Ignore secrets
+server/.env
+.env
+
+# Ignore build files
+client/dist/
 
