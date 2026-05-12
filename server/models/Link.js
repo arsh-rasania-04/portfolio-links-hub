@@ -5,7 +5,14 @@ const LinkSchema = new mongoose.Schema({
   url: { type: String, required: true },
   color: { type: String, default: '#4ade80' },
   progress: { type: Number, default: 0 },
-  category: { type: String, default: 'learning' }
+  category: { type: String, default: 'learning' },
+
+  userId: { 
+  type: mongoose.Schema.Types.ObjectId, 
+  ref: 'User', 
+  required: true 
+}
+
 });
 
 module.exports = mongoose.model('Link', LinkSchema);
