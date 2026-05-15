@@ -2,18 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Auth from './Auth';
 
 const ProjectCard = ({ _id, name, url, progress, color, onDelete, onEdit }) => { 
-  // const getStatus = (p) => {
-  //   if (p === 0) return "Pending";
-  //   if (p === 100) return "Completed";
-  //   return "In Progress";
-  // };
-
-  // const getBarColor = (p) => {
-  //   if (p === 0) return "#555";
-  //   if (p === 100) return "#60a5fa";
-  //   return "#4ade80";
-  // };
-
+  
   return (
     <div style={{
       border: '1px solid #333',
@@ -27,10 +16,6 @@ const ProjectCard = ({ _id, name, url, progress, color, onDelete, onEdit }) => {
     }}>
       <h3 style={{ margin: '0 0 10px 0' }}>{name}</h3>
       <p style={{ fontSize: '0.8rem', color: '#aaa' }}></p>
-
-      {/* <div style={{ width: '100%', height: '8px', backgroundColor: '#333', borderRadius: '4px', margin: '10px 0' }}>
-        <div style={{ width: `${progress || 0}%`, height: '100%', backgroundColor: getBarColor(progress || 0), borderRadius: '4px' }}></div>
-      </div> */}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '15px' }}>
         <a
@@ -197,7 +182,7 @@ function App() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: '800px', margin: '0 auto 40px auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <div style={{ width: '45px', height: '45px', backgroundColor: '#333', borderRadius: '50%', border: '2px solid #4ade80' }}></div>
-          <h2 style={{ margin: 0, fontSize: '1.2rem', letterSpacing: '0.5px' }}>Cloud Link-Hub</h2>
+          <h2 style={{ margin: 0, fontSize: '1.2rem', letterSpacing: '0.5px' }}>LINKHUB</h2>
         </div>
         <button 
           onClick={handleLogout} 
@@ -209,11 +194,11 @@ function App() {
 
       {/* Add a New Link Form Box */}
       <div style={{ maxWidth: '600px', margin: '0 auto 40px auto', padding: '20px', backgroundColor: '#1e1e1e', borderRadius: '12px', border: '1px solid #333' }}>
-        <h3 style={{ marginTop: 0, marginBottom: '15px', fontSize: '1.1rem', color: '#4ade80' }}>Add a New Link</h3>
+        <h3 style={{ marginTop: 0, marginBottom: '15px', fontSize: '1.1rem', color: '#4ade80' }}>Add Links</h3>
         <form onSubmit={handleAddLink} style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <input 
             type="text" 
-            placeholder="Link Name" 
+            placeholder="Name" 
             value={newName} 
             onChange={(e) => setNewName(e.target.value)}
             style={{ flex: 1, padding: '10px', borderRadius: '6px', border: 'none', backgroundColor: '#333', color: 'white' }}
