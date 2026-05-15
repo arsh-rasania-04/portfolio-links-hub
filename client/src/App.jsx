@@ -48,12 +48,24 @@ const ProjectCard = ({ _id, name, url, progress, color, onDelete, onEdit }) => {
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token'));
-  const [links, setLinks] = useState([]); // Cleaned up the duplicate state line here
+  const [links, setLinks] = useState([]);
   const [newName, setNewName] = useState("");
   const [newUrl, setNewUrl] = useState("");
-  const [newCategory, setNewCategory] = useState("learning");
+  
+  // --- FOLDER STATES ---
+  const [categoryOption, setCategoryOption] = useState("Saved"); 
+  const [customCategory, setCustomCategory] = useState("");     
 
-  // --- AUTH COMPONENT TRACKERS ---
+  // Dynamically extract folders, strictly ignoring the old 'learning' and 'social' defaults
+  const uniqueCategories = [
+    "Saved",
+    ...new Set(
+      links
+        .map(link => link.category)
+        .filter(cat => cat && cat !== "Saved" && cat !== "learning" && cat !== "social")
+    )
+  ];
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     setToken(null);
@@ -64,36 +76,37 @@ function App() {
     setToken(localStorage.getItem('token'));
   };
 
-  // 1. FETCH LINKS (Modified to look for and send token)
+  // FETCH LINKS
   useEffect(() => {
-    if (!token) return; // Do not fetch if there is no logged-in user
-
+    if (!token) return;
     fetch('http://localhost:5001/api/links', {
-      headers: { 'x-auth-token': token } // Pass token checkpoint to backend
+      headers: { 'x-auth-token': token }
     })
       .then(res => {
-        if (res.status === 401) {
-          handleLogout(); // Auto-logout if token is invalid or expired
-          throw new Error("Session expired. Please log in again.");
-        }
+        if (res.status === 401) handleLogout();
         return res.json();
       })
       .then(data => {
         if (Array.isArray(data)) setLinks(data);
       })
       .catch(err => console.error("Could not fetch links:", err));
-  }, [token]); // Refetches immediately when a user logs in
+  }, [token]);
 
-  // 2. ADD LINK (Modified to send token)
+  // ADD LINK
   const handleAddLink = async (e) => {
     e.preventDefault();
     if (!newName || !newUrl) return;
 
+    let finalCategory = categoryOption;
+    if (categoryOption === "NEW_FOLDER") {
+      finalCategory = customCategory.trim() || "Saved";
+    }
+
     const newLinkObject = {
       name: newName,
       url: newUrl,
-      color: newCategory === 'social' ? "#6e57e0" : "#4ade80",
-      category: newCategory
+      category: finalCategory,
+      color: finalCategory === 'Saved' ? "#4ade80" : "#60a5fa" // Green for default, Blue for custom folders
     };
 
     try {
@@ -101,7 +114,7 @@ function App() {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'x-auth-token': token // Assigns current user ownership in MongoDB
+          'x-auth-token': token 
         },
         body: JSON.stringify(newLinkObject)
       });
@@ -110,27 +123,26 @@ function App() {
       
       const savedLink = await response.json();
       setLinks([...links, savedLink]); 
+      
       setNewName("");
       setNewUrl("");
+      setCustomCategory("");
+      setCategoryOption("Saved"); 
     } catch (err) {
       console.error("Error saving link:", err);
     }
   };
 
-  // 3. DELETE LINK (Modified to send token)
+  // DELETE LINK
   const handleDelete = async (id) => {
     if (window.confirm("Delete this link permanently?")) {
       try {
         const response = await fetch(`http://localhost:5001/api/links/${id}`, { 
           method: 'DELETE',
-          headers: { 'x-auth-token': token } // Verifies delete ownership
+          headers: { 'x-auth-token': token }
         });
-
         if (response.ok) {
           setLinks(links.filter(link => link._id !== id));
-        } else {
-          const errData = await response.json();
-          alert(errData.message || "Failed to delete resource");
         }
       } catch (err) {
         console.error("Error deleting link:", err);
@@ -138,7 +150,7 @@ function App() {
     }
   };
 
-  // 4. EDIT LINK (Modified to send token)
+  // EDIT LINK
   const handleEdit = async (id, currentName, currentUrl) => {
     const updatedName = prompt("Edit link name:", currentName);
     const updatedUrl = prompt("Edit link URL:", currentUrl);
@@ -149,19 +161,13 @@ function App() {
           method: 'PUT',
           headers: { 
             'Content-Type': 'application/json',
-            'x-auth-token': token // Verifies update ownership
+            'x-auth-token': token 
           },
           body: JSON.stringify({ name: updatedName, url: updatedUrl })
         });
-        
         const updatedData = await response.json();
-
         if (response.ok) {
-          setLinks(prevLinks => prevLinks.map(link => 
-            link._id === id ? updatedData : link
-          ));
-        } else {
-          alert(updatedData.message || "Failed to update resource");
+          setLinks(prevLinks => prevLinks.map(link => link._id === id ? updatedData : link));
         }
       } catch (err) {
         console.error("Update failed:", err);
@@ -169,7 +175,6 @@ function App() {
     }
   };
 
-  // 1. If there is no token, completely intercept and show the Login/Signup page
   if (!token) {
     return <Auth onAuthSuccess={handleAuthSuccess} />;
   }
@@ -178,82 +183,105 @@ function App() {
   return (
     <div style={{ padding: '40px', color: 'white', backgroundColor: '#121212', minHeight: '100vh', fontFamily: 'sans-serif' }}>
       
-      {/* Top Header Row with Profile Circle and Logout Button */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: '800px', margin: '0 auto 40px auto' }}>
+      {/* Top Header Banner */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: '1200px', margin: '0 auto 40px auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <div style={{ width: '45px', height: '45px', backgroundColor: '#333', borderRadius: '50%', border: '2px solid #4ade80' }}></div>
           <h2 style={{ margin: 0, fontSize: '1.2rem', letterSpacing: '0.5px' }}>LINKHUB</h2>
         </div>
-        <button 
-          onClick={handleLogout} 
-          style={{ backgroundColor: 'transparent', border: '1px solid #ef4444', color: '#ef4444', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85rem', transition: '0.2s' }}
-        >
-          Logout
+        <button onClick={handleLogout} style={{ backgroundColor: 'transparent', border: '1px solid #ef4444', color: '#ef4444', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85rem' }}>
+          LOGOUT
         </button>
       </div>
 
-      {/* Add a New Link Form Box */}
-      <div style={{ maxWidth: '600px', margin: '0 auto 40px auto', padding: '20px', backgroundColor: '#1e1e1e', borderRadius: '12px', border: '1px solid #333' }}>
-        <h3 style={{ marginTop: 0, marginBottom: '15px', fontSize: '1.1rem', color: '#4ade80' }}>Add Links</h3>
-        <form onSubmit={handleAddLink} style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <input 
-            type="text" 
-            placeholder="Name" 
-            value={newName} 
-            onChange={(e) => setNewName(e.target.value)}
-            style={{ flex: 1, padding: '10px', borderRadius: '6px', border: 'none', backgroundColor: '#333', color: 'white' }}
-          />
-          <input 
-            type="url" 
-            placeholder="https://..." 
-            value={newUrl} 
-            onChange={(e) => setNewUrl(e.target.value)}
-            style={{ flex: 2, padding: '10px', borderRadius: '6px', border: 'none', backgroundColor: '#333', color: 'white' }}
-          />
-          <select 
-            value={newCategory} 
-            onChange={(e) => setNewCategory(e.target.value)}
-            style={{ padding: '10px', borderRadius: '6px', border: 'none', backgroundColor: '#333', color: 'white', cursor: 'pointer' }}
-          >
-            <option value="learning">Learning</option>
-            <option value="social">Social</option>
-          </select>
-          <button type="submit" style={{ padding: '10px 20px', borderRadius: '6px', border: 'none', backgroundColor: '#4ade80', color: 'black', fontWeight: 'bold', cursor: 'pointer' }}>
+      {/* Control Form Block */}
+      <div style={{ maxWidth: '700px', margin: '0 auto 50px auto', padding: '25px', backgroundColor: '#1e1e1e', borderRadius: '12px', border: '1px solid #333' }}>
+        <h3 style={{ marginTop: 0, marginBottom: '15px', fontSize: '1.1rem', color: '#4ade80' }}>Add new link</h3>
+        <form onSubmit={handleAddLink} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <input 
+              type="text" 
+              placeholder="Link Name" 
+              value={newName} 
+              onChange={(e) => setNewName(e.target.value)}
+              style={{ flex: 1, padding: '12px', borderRadius: '6px', border: 'none', backgroundColor: '#333', color: 'white' }}
+            />
+            <input 
+              type="url" 
+              placeholder="Link URL" 
+              value={newUrl} 
+              onChange={(e) => setNewUrl(e.target.value)}
+              style={{ flex: 2, padding: '12px', borderRadius: '6px', border: 'none', backgroundColor: '#333', color: 'white' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              <label style={{ fontSize: '0.8rem', color: '#aaa' }}>Choose Subfolder</label>
+              <select 
+                value={categoryOption} 
+                onChange={(e) => setCategoryOption(e.target.value)}
+                style={{ padding: '12px', borderRadius: '6px', border: 'none', backgroundColor: '#333', color: 'white', cursor: 'pointer' }}
+              >
+                {uniqueCategories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+                <option value="NEW_FOLDER" style={{ color: '#60a5fa', fontWeight: 'bold' }}>[Create New Subfolder]</option>
+              </select>
+            </div>
+
+            {categoryOption === "NEW_FOLDER" && (
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                <label style={{ fontSize: '0.8rem', color: '#60a5fa' }}>Name</label>
+                <input 
+                  type="text" 
+                  placeholder="" 
+                  value={customCategory}
+                  onChange={(e) => setCustomCategory(e.target.value)}
+                  style={{ padding: '12px', borderRadius: '6px', border: '1px solid #60a5fa', backgroundColor: '#222', color: 'white' }}
+                />
+              </div>
+            )}
+          </div>
+
+          <button type="submit" style={{ padding: '12px', borderRadius: '6px', border: 'none', backgroundColor: '#4ade80', color: 'black', fontWeight: 'bold', cursor: 'pointer', marginTop: '5px' }}>
             Add
           </button>
         </form>
       </div>
 
-      {/* Two-Column Links View Layout */}
-      <div style={{ display: 'flex', gap: '40px', flexWrap: 'wrap', justifyContent: 'center', maxWidth: '1000px', margin: '0 auto' }}>
-        
-        {/* Socials Column */}
-        <div style={{ flex: '1', minWidth: '300px', maxWidth: '450px' }}>
-          <h2 style={{ borderBottom: '2px solid #6e57e0', width: 'fit-content', paddingBottom: '5px', marginBottom: '20px', fontSize: '1.3rem' }}>Socials & Portfolio</h2>
-          {links.filter(link => link.category === 'social').map(proj => (
-            <ProjectCard 
-              key={proj._id} 
-              {...proj} 
-              onDelete={handleDelete} 
-              onEdit={handleEdit} 
-            />
-          ))}
-        </div>
+      {/* Dynamic Grid Distribution Display */}
+      <div style={{ display: 'flex', gap: '30px', flexWrap: 'wrap', justifyContent: 'flex-start', maxWidth: '1200px', margin: '0 auto' }}>
+        {uniqueCategories.map(folderName => {
+          const folderLinks = links.filter(link => {
+            const currentCat = link.category || "Saved";
+            return currentCat === folderName;
+          });
 
-        {/* Learning Resources Column */}
-        <div style={{ flex: '1', minWidth: '300px', maxWidth: '450px' }}>
-          <h2 style={{ borderBottom: '2px solid #4ade80', width: 'fit-content', paddingBottom: '5px', marginBottom: '20px', fontSize: '1.3rem' }}>Learning Resources</h2>
-          {links.filter(link => link.category === 'learning').map(proj => (
-            <ProjectCard 
-              key={proj._id} 
-              {...proj} 
-              onDelete={handleDelete} 
-              onEdit={handleEdit} 
-            />
-          ))}
-        </div>
+          // Don't draw empty custom folders, but always render 'Saved' even if empty
+          if (folderName !== "Saved" && folderLinks.length === 0) return null;
 
+          return (
+            <div key={folderName} style={{ flex: '1', minWidth: '300px', maxWidth: '380px', backgroundColor: '#161616', padding: '20px', borderRadius: '10px', border: '1px solid #252525' }}>
+              <h2 style={{ borderBottom: `2px solid ${folderName === 'Saved' ? '#4ade80' : '#60a5fa'}`, width: 'fit-content', paddingBottom: '5px', marginBottom: '20px', fontSize: '1.2rem', textTransform: 'capitalize' }}>
+                {folderName} ({folderLinks.length})
+              </h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                {folderLinks.map(proj => (
+                  <ProjectCard 
+                    key={proj._id} 
+                    {...proj} 
+                    onDelete={handleDelete} 
+                    onEdit={handleEdit} 
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
+
     </div>
   );
 }
