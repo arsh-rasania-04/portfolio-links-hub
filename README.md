@@ -1,16 +1,36 @@
-# React + Vite
+# 🔗 LinkHub
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+![LinkHub Banner/Screenshot](./dashboard.png) 
+*Replace the link above with a wide screenshot of your main dashboard.*
 
-Currently, two official plugins are available:
+LinkHub is a sleek, full-stack bookmarking and resource management dashboard. It allows users to securely save, categorize, and organize their most important links in a clean, modern, dark-themed interface.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## ✨ Features
 
-## React Compiler
+* **Secure Authentication:** Full user registration and login system protected by JSON Web Tokens (JWT) and bcrypt password hashing.
+* **Smart Categorization:** Automatically groups links into custom, user-defined folders.
+* **Interactive UI:** Expandable/collapsible subfolders and a beautiful, blurred modal for adding new resources.
+* **Bulletproof Data:** Complete CRUD (Create, Read, Update, Delete) operations, with backend middleware ensuring users can only modify their own data.
+* **Resilient Design:** Built-in "Server Offline" detection gracefully handles backend disconnections without crashing the frontend.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 📸 Screenshots
 
-## Expanding the ESLint configuration
+| Login Page | Add Link Modal |
+| :---: | :---: |
+| ![Dashboard](./login.png) | ![Modal](./adding_data.png) |
+| *Clean, grid-based layout for saved resources.* | *Sleek UI for categorizing new links.* |
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🛠️ Tech Stack
+
+**Frontend:**
+* React.js
+* CSS/Inline Styles (Custom Dark Theme)
+* Fetch API for asynchronous requests
+
+**Backend:**
+* Node.js & Express.js
+* MongoDB & Mongoose (Database & Modeling)
+* JSON Web Tokens (JWT) for secure route authorization
+* bcryptjs for password encryption
+
+---

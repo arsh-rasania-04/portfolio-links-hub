@@ -52,11 +52,12 @@ function App() {
   const [newName, setNewName] = useState("");
   const [newUrl, setNewUrl] = useState("");
   
-  // --- FOLDER & MODAL STATES ---
+  // --- STATES ---
   const [categoryOption, setCategoryOption] = useState("Saved"); 
   const [customCategory, setCustomCategory] = useState("");     
   const [collapsedFolders, setCollapsedFolders] = useState({});
-  const [isModalOpen, setIsModalOpen] = useState(false); // Controls the add link popup
+  const [isModalOpen, setIsModalOpen] = useState(false); 
+  const [isServerDown, setIsServerDown] = useState(false); // NEW: Server status state
 
   const uniqueCategories = [
     "Saved",
@@ -71,6 +72,7 @@ function App() {
     localStorage.removeItem('token');
     setToken(null);
     setLinks([]);
+    setIsServerDown(false);
   };
 
   const handleAuthSuccess = () => {
@@ -87,17 +89,34 @@ function App() {
   // FETCH LINKS
   useEffect(() => {
     if (!token) return;
+    
+    setIsServerDown(false); // Reset on attempt
+    
     fetch('http://localhost:5001/api/links', {
       headers: { 'x-auth-token': token }
     })
       .then(res => {
-        if (res.status === 401) handleLogout();
+        if (!res.ok) {
+          if (res.status === 401) {
+            handleLogout();
+            throw new Error("Unauthorized");
+          }
+        }
         return res.json();
       })
       .then(data => {
-        if (Array.isArray(data)) setLinks(data);
+        if (Array.isArray(data)) {
+          setLinks(data);
+          setIsServerDown(false);
+        }
       })
-      .catch(err => console.error("Could not fetch links:", err));
+      .catch(err => {
+        console.error("Connection failed:", err);
+        // If fetch fails entirely (e.g., server offline), it triggers this catch block
+        if (err.message !== "Unauthorized") {
+          setIsServerDown(true);
+        }
+      });
   }, [token]);
 
   // ADD LINK
@@ -136,13 +155,14 @@ function App() {
       setNewUrl("");
       setCustomCategory("");
       setCategoryOption("Saved"); 
-      setIsModalOpen(false); // Close modal on success
+      setIsModalOpen(false); 
       
       if (collapsedFolders[finalCategory]) {
         toggleFolder(finalCategory);
       }
     } catch (err) {
       console.error("Error saving link:", err);
+      alert("Failed to connect to server. Link not saved.");
     }
   };
 
@@ -156,9 +176,12 @@ function App() {
         });
         if (response.ok) {
           setLinks(links.filter(link => link._id !== id));
+        } else {
+          throw new Error("Failed to delete");
         }
       } catch (err) {
         console.error("Error deleting link:", err);
+        alert("Failed to connect to server. Link not deleted.");
       }
     }
   };
@@ -178,18 +201,46 @@ function App() {
           },
           body: JSON.stringify({ name: updatedName, url: updatedUrl })
         });
-        const updatedData = await response.json();
         if (response.ok) {
+          const updatedData = await response.json();
           setLinks(prevLinks => prevLinks.map(link => link._id === id ? updatedData : link));
+        } else {
+          throw new Error("Update failed");
         }
       } catch (err) {
         console.error("Update failed:", err);
+        alert("Failed to connect to server. Link not updated.");
       }
     }
   };
 
+  // --- RENDERING LOGIC ---
+
   if (!token) {
     return <Auth onAuthSuccess={handleAuthSuccess} />;
+  }
+
+  // NEW: Server Down Screen
+  if (isServerDown) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#121212', color: 'white', fontFamily: 'sans-serif' }}>
+        <div style={{ textAlign: 'center', backgroundColor: '#1e1e1e', padding: '40px', borderRadius: '16px', border: '1px solid #ef4444', boxShadow: '0 10px 40px rgba(239, 68, 68, 0.15)', maxWidth: '400px' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '15px' }}>🔌</div>
+          <h2 style={{ color: '#ef4444', margin: '0 0 15px 0' }}>Server Offline</h2>
+          <p style={{ color: '#aaa', fontSize: '0.95rem', lineHeight: '1.5', marginBottom: '25px' }}>
+            We lost connection to the LinkHub cloud. Make sure your backend is running on port 5001.
+          </p>
+          <button 
+            onClick={() => window.location.reload()}
+            style={{ padding: '12px 24px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '1rem', transition: 'opacity 0.2s' }}
+            onMouseOver={(e) => e.target.style.opacity = 0.8}
+            onMouseOut={(e) => e.target.style.opacity = 1}
+          >
+            Try Reconnecting
+          </button>
+        </div>
+      </div>
+    );
   }
 
   const inputStyles = {
@@ -239,7 +290,6 @@ function App() {
             padding: '30px', borderRadius: '16px', border: '1px solid #333',
             boxShadow: '0 10px 40px rgba(0,0,0,0.5)', position: 'relative'
           }}>
-            {/* Close Button */}
             <button 
               onClick={() => setIsModalOpen(false)}
               style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', color: '#aaa', fontSize: '1.2rem', cursor: 'pointer' }}
@@ -303,7 +353,7 @@ function App() {
         </div>
       )}
 
-      {/* Grid Layout - FIX FOR THE STRETCHING ISSUE */}
+      {/* Grid Layout */}
       <div style={{ 
         display: 'grid', 
         gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', 
@@ -329,24 +379,17 @@ function App() {
               border: '1px solid #252525',
               height: 'fit-content'
             }}>
-              {/* Header with Toggle Button */}
               <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 borderBottom: `2px solid ${folderName === 'Saved' ? '#4ade80' : '#60a5fa'}`,
-                paddingBottom: '8px', 
-                marginBottom: '20px'
+                paddingBottom: '8px', marginBottom: '20px'
               }}>
                 <h2 style={{ margin: 0, fontSize: '1.2rem', textTransform: 'capitalize' }}>
                   {folderName} <span style={{ color: '#888', fontSize: '1rem' }}>({folderLinks.length})</span>
                 </h2>
                 <button 
                   onClick={() => toggleFolder(folderName)}
-                  style={{ 
-                    backgroundColor: 'transparent', border: 'none', color: '#888', cursor: 'pointer', 
-                    fontSize: '1rem', padding: '5px', display: 'flex', alignItems: 'center'
-                  }}
+                  style={{ backgroundColor: 'transparent', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1rem', padding: '5px', display: 'flex', alignItems: 'center' }}
                 >
                   {isCollapsed ? '▶' : '▼'}
                 </button>
