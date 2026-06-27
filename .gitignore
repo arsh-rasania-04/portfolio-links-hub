@@ -11,3 +11,4 @@ server/.env
 client/dist/
 
 .DS_Store
+node_modules/
