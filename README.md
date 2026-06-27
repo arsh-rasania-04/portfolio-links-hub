@@ -1,6 +1,6 @@
 # 🔗 LinkHub
 
-![LinkHub Banner/Screenshot](./dashboard.png) 
+![LinkHub Banner/Screenshot](./screenshots/dashboard.png) 
 
 LinkHub is a sleek, full-stack bookmarking and resource management dashboard. It allows users to securely save, categorize, and organize their most important links in a clean, modern, dark-themed interface.
 
@@ -16,7 +16,7 @@ LinkHub is a sleek, full-stack bookmarking and resource management dashboard. It
 
 | Login Page | Add Link Modal |
 | :---: | :---: |
-| ![Dashboard](./login.png) | ![Modal](./adding_data.png) |
+| ![Dashboard](./screenshots/login.png) | ![Modal](./screenshots/adding_data.png) |
 | *Clean, grid-based layout for saved resources.* | *Sleek UI for categorizing new links.* |
 
 ## 🛠️ Tech Stack
